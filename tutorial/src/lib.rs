@@ -91,7 +91,12 @@ impl<'a> State<'a> {
     }
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        todo!()
+        if new_size.width > 0 && new_size.height > 0 {
+            self.size = new_size;
+            self.config.width = new_size.width;
+            self.config.height = new_size.height;
+            self.surface.configure(&self.device, &self.config);
+        }
     }
 
     fn input(&mut self, event: &WindowEvent) -> bool {
@@ -107,31 +112,36 @@ impl<'a> State<'a> {
     }
 }
 
-pub async  fn run() {
+pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    let mut state = State::new(&window).await;
+    let mut state = State::new(&window).await; 
 
     event_loop.run(move |event, control_flow| {
         match event {
             Event::WindowEvent {
                 ref event,
                 window_id,
-            } if window_id == state.window().id() => match event {
-                WindowEvent::CloseRequested
-                | WindowEvent::KeyboardInput {
-                    event:
-                        KeyEvent {
-                            state: ElementState::Pressed,
-                            physical_key: PhysicalKey::Code(KeyCode::Escape),
-                            ..
-                        },
-                    ..
-                } => control_flow.exit(),
-                _ => {}
-            },
+            } if window_id == state.window().id() =>
+                match event {
+                    WindowEvent::CloseRequested
+                    | WindowEvent::KeyboardInput {
+                        event:
+                            KeyEvent {
+                                state: ElementState::Pressed,
+                                physical_key: PhysicalKey::Code(KeyCode::Escape),
+                                ..
+                            },
+                        ..
+                    } => control_flow.exit(),
+                    WindowEvent::Resized(physical_size) => {
+                        print!("Resize to {:?}", physical_size);
+                        state.resize(*physical_size);
+                    },
+                    _ => {}
+                },
             _ => {}
         }
     });
