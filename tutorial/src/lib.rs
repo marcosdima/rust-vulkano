@@ -22,6 +22,7 @@ struct State<'a> {
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
     diffuse_texture: texture::Texture,
+    change_flag: bool,
 }
 
 #[repr(C)]
@@ -273,6 +274,7 @@ impl<'a> State<'a> {
             num_indices,
             diffuse_bind_group,
             diffuse_texture,
+            change_flag: false
         }
     }
 
@@ -290,7 +292,23 @@ impl<'a> State<'a> {
     }
 
     fn input(&mut self, event: &WindowEvent) -> bool {
-        false // for now...
+        match event {
+            WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        state,
+                        physical_key: PhysicalKey::Code(KeyCode::Space),
+                        ..
+                    },
+                ..
+            } => {
+                if *state == ElementState::Released {
+                    self.change_flag = !self.change_flag;
+                }
+                true
+            }
+            _ => false,
+        }
     }
 
     fn update(&mut self) {
